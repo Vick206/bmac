@@ -1,0 +1,82 @@
+#!/bin/bash
+#This program was made because macosx doesn't have an easy way to change your mac address and because of KFC's stuipid hour long free wifi limit
+#made by Vick206x
+if [ "$1" == "-h" ] || [ "$2" == "-h" ] ; then
+      echo "Usage: `basename $0` [-W] [-E] [-D] [-H]"
+	  echo "Used to change mac address on Mac or Linux"
+	  echo "-e Ethernet (en0)"
+	  echo "-w Wireless (en1) *default"
+	  echo "-m manual allows you to specify the adapter syntax is -m <adapter>"
+	  echo "-c attempts to copy script into /usr/local/bin must be used in the syntax -c -c -c to verify this is what you want to do"
+	  echo "-d DC from wireless network and check to install AirPort from system (run as root)"
+	  echo "-h help"
+fi
+#code below copies this script into the PATH if user requests it
+if [ "$1" == "-c" ] && [ "$2" == "-c" ] && [ "$3" == "-c" ] ; then
+	if  [ ! -f //usr/local/bin/$0 ]; then
+    cp  $0 //usr/local/bin/ 
+    else
+    echo "Already in path!"
+
+    fi
+fi
+
+#this code copies airport if it needs to and disconnects from wifi dc can be used as a third tak for use with -m
+if [ "$1" == "-d" ] || [ "$2" == "-d" ] || [ "$3" == "-d" ] ; then
+	if  [ ! -f //usr/local/bin/airport ]; then
+    echo "File not found"
+    cp /System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport //usr/local/bin/
+    else
+    airport -z
+    echo "disconnecting..."
+    sleep 5
+
+    fi
+fi
+
+#this variable sets the default adapter as en1 (default wireless on mac) making the -w tac useless 
+adapter=en1
+
+#this variable grabs the current address for future reference
+old_mac="$( ifconfig $adapter | grep ether )"
+
+
+#generates a mac address for future use
+generate_mac()
+{
+new_mac="$(openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/.$//')"
+}
+
+#changes mac address and checks for change 
+mac_changer()
+{
+ generate_mac
+echo $new_mac
+ ifconfig $adapter ether "${new_mac}"
+
+ x="$( ifconfig $adapter | grep ether )"
+ if [ "$x" == "$old_mac" ] ; then
+ 	echo "error mac not changed please try again"
+ 	echo "old mac is $old_mac "
+ 	echo "new mac is $x " 
+ else
+ 	echo " mac changed!"
+ 	echo " old mac = $old_mac "
+ 	echo " new mac = $x "
+ fi
+}
+
+#changes adapter to en0 if ethernet is desired or allows manual input
+if [ "$1" == "-e" ] || [ "$2" == "-e" ] ; then
+	adapter=en0	
+	mac_changer
+elif [ "$1" == "-m" ] ; then
+	adapter="$2"
+	mac_changer
+elif [ "$1" == "-w" ] || [ "$2" == "-w" ] ; then
+	adapter=en1
+	mac_changer
+else 
+	echo "no adapter specifed"
+
+fi
