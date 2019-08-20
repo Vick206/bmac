@@ -1,0 +1,22 @@
+#!/bin/bash
+touch /etc/init/ttyUSB0.conf
+FILE="/etc/init/ttyUSB0.conf"
+
+/bin/cat <<EOM >$FILE
+# ttyS0 - getty
+#
+# This service maintains a getty on ttyS0 from the point the system is
+# started until it is shut down again.
+
+start on stopped rc RUNLEVEL=[12345]
+stop on runlevel [!12345]
+
+respawn
+exec /sbin/getty -L 9600 ttyUSB0 vt220
+EOM
+
+sudo systemctl start ttyUSB0
+sudo systemctl start serial-getty@ttyUSB0.service
+sudo systemctl enable serial-getty@ttyUSB0.service
+
+
